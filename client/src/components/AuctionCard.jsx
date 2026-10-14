@@ -8,7 +8,7 @@ export default function AuctionCard({ auction }) {
 
   return (
     <Link
-      to={`/auction/${auction._id}`}
+      to={`/auctions/${auction._id}/manage`}
       viewTransition
       onMouseEnter={() => prefetchAuction(auction._id)}
       className="group block w-full bg-white rounded-2xl border border-gray-200/80 shadow-sm hover:shadow-md hover:border-gray-300/80 transition-all duration-200"

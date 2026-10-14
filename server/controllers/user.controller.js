@@ -4,6 +4,7 @@ import bcrypt from "bcrypt";
 import mongoose from "mongoose";
 
 export const handleGetUser = async (req, res) => {
+  console.log("server hanleGetUser");
   try {
     const user = await User.findById(req.user.id).select(
       "name email avatar role",
@@ -89,8 +90,8 @@ export const getLoginHistory = async (req, res) => {
 
     const formatted = logins.map((login) => {
       const date = new Date(login.loginAt);
-      const formattedDate = date.toLocaleString("en-IN", {
-        timeZone: "Asia/Kolkata",
+      const formattedDate = date.toLocaleString("en-US", {
+        timeZone: "America/Chicago",
         day: "2-digit",
         month: "short",
         year: "numeric",
@@ -114,6 +115,8 @@ export const getLoginHistory = async (req, res) => {
         location: location || "Unknown",
         isp: login.location?.isp || "Unknown",
         device: getDeviceType(login.userAgent),
+		auction: auction,
+		credit: credit,
       };
     });
 

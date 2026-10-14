@@ -90,7 +90,7 @@ export const Contact = () => {
                 </div>
                 <div>
                   <h3 className="text-sm font-semibold text-gray-900">
-                    Email Us
+                    Github Author
                   </h3>
                   <p className="text-sm text-gray-500 mt-1">hi@ihavetech.com</p>
                 </div>

@@ -9,24 +9,33 @@ export const Hero = () => {
       <div className="absolute top-20 left-10 w-72 h-72 bg-indigo-100/40 rounded-full blur-3xl" />
       <div className="absolute bottom-10 right-10 w-96 h-96 bg-amber-100/30 rounded-full blur-3xl" />
 
-      <div className="relative max-w-6xl mx-auto px-4 pt-20 pb-24 sm:pt-28 sm:pb-32">
+      <div className="relative max-w-6xl mx-auto px-1 pt-10 pb-1 sm:pt-10 sm:pb-5">
         <div className="text-center max-w-3xl mx-auto">
           {/* Badge */}
           <div className="inline-flex items-center gap-2 bg-indigo-50 border border-indigo-100 text-indigo-700 text-xs font-semibold px-4 py-1.5 rounded-full mb-6">
             <span className="w-1.5 h-1.5 bg-emerald-500 rounded-full animate-pulse" />
-            Live auctions happening now
+            Free to use no money involved
           </div>
 
-          <h1 className="text-4xl sm:text-5xl md:text-6xl font-extrabold text-gray-900 tracking-tight leading-[1.1] mb-6">
-            Bid, Win &{" "}
+          <h1 className="text-2xl sm:text-3xl md:text-4xl font-extrabold text-gray-900 tracking-tight leading-[1.1] mb-6">
+            Free Credits -{" "}
             <span className="text-transparent bg-clip-text bg-gradient-to-r from-indigo-600 to-violet-600">
-              Sell Online
+              Weighted Auction
             </span>
           </h1>
           <p className="text-lg text-gray-500 mb-10 max-w-xl mx-auto leading-relaxed">
-            Discover unique items, place competitive bids, and sell your
-            treasures to a global audience. Trusted by thousands.
+            Dispurse rare items, vote on the weekend activity,  
+            stress free among friends and family.
           </p>
+			<p className="text-lg font-semibold text-gray-700 mb-4">
+Simple and easy as 1, 2, 3!
+</p>
+
+			<ol className="max-w-xl mx-auto text-left text-gray-600 list-decimal list-inside space-y-2 mb-10 pl-40">
+			<li>Create an <em>Admin</em> Account</li>
+			<li>Add Auction Items</li>
+			<li>Share User Invites with 1,000 Credits</li>
+			</ol>
           <div className="flex flex-col sm:flex-row gap-3 justify-center">
             <Link
               to="/signup"
@@ -97,7 +106,7 @@ export const Hero = () => {
                   clipRule="evenodd"
                 />
               </svg>
-              Secure payments
+              Fair and Equitable
             </span>
           </div>
         </div>

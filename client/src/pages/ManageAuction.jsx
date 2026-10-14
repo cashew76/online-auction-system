@@ -278,7 +278,7 @@ const displayPrice =
             {[...selectedItem.bids]
               .sort(
                 (a, b) =>
-                  b.bidAmount - a.bidAmount
+                  new Date(b.bidTime).getTime() - new Date(a.bidTime).getTime()
               )
               .map((bid, idx) => (
                 <tr

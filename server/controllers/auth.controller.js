@@ -6,6 +6,7 @@ import { getClientIp, getLocationFromIp } from "../utils/geoDetails.js";
 import { clearCookie, setCookie } from "../utils/cookies.util.js";
 
 export const handleUserLogin = async (req, res) => {
+  console.log("server hanleUserLogin");
   const { email, password } = req.body;
   if (!email || !password)
     return res.status(400).json({ error: "All Fields are required" });
@@ -17,6 +18,7 @@ export const handleUserLogin = async (req, res) => {
     }
 
     // Password Validate
+	console.log("server passwordValidate");
     const psswordValidate = await bcrypt.compare(password, user.password);
     if (!psswordValidate) {
       return res.status(401).json({ error: "Invalid email or password" });
@@ -93,14 +95,17 @@ export const handleUserSignup = async (req, res) => {
       name,
       email,
       password: hashedPassword,
-      avatar: "https://avatar.iran.liara.run/public/7",
+      //avatar: "https://avatar.iran.liara.run/public/7",
+	  avatar: "",
       ipAddress: ip,
       userAgent,
       location,
       signupAt: new Date(),
       lastLogin: new Date(),
     });
+	console.log("newUser Signup IP:", ip);
     await newUser.save();
+	console.log("newUser.save  ");
 
     const login = new Login({
       userId: newUser._id,
@@ -109,7 +114,9 @@ export const handleUserSignup = async (req, res) => {
       location,
       loginAt: new Date(),
     });
+	console.log("new Login ", ip);
     await login.save();
+	console.log("Login.save ", ip);
 
     // Generating jwt token
     const token = generateToken(newUser._id, newUser.role);

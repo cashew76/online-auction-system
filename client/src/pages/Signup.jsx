@@ -7,6 +7,7 @@ import LoadingScreen from "../components/LoadingScreen";
 import { useDocumentTitle } from "../hooks/useDocumentTitle";
 
 const Signup = () => {
+  console.log("client Signup is moving ");
   useDocumentTitle("Sign Up");
   const navigate = useNavigate();
   const dispatch = useDispatch();
@@ -26,7 +27,7 @@ const Signup = () => {
       await dispatch(signup(formData)).unwrap();
       navigate("/");
     } catch (error) {
-      console.log("Signup Failed", error);
+      console.log("Signup F Failed", error);
       setIsError(error || "something went wrong");
       setTimeout(() => {
         setIsError("");

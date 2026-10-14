@@ -47,7 +47,28 @@ const statConfig = [
       </svg>
     ),
   },
-  {
+    {
+        key: "userCredit", // This should match the key name returned by your useDashboardStats() hook
+        label: "User Credit",
+        color: "text-amber-600",
+        bg: "bg-amber-50",
+        icon: (
+            <svg
+                className="w-5 h-5 text-amber-500"
+                fill="none"
+                viewBox="0 0 24 24"
+                stroke="currentColor"
+            >
+                <path
+                    strokeLinecap="round"
+                    strokeLinejoin="round"
+                    strokeWidth={1.5}
+                    d="M12 8c-1.657 0-3 .895-3 2s1.343 2 3 2 3 .895 3 2-1.343 2-3 2m0-8c1.11 0 2.08.402 2.599 1M12 8V7m0 1v8m0 0v1m0-1c-1.11 0-2.08-.402-2.599-1M21 12a9 9 0 11-18 0 9 9 0 0118 0z"
+                />
+            </svg>
+        ),
+    },
+    {
     key: "userAuctionCount",
     label: "Your Listings",
     color: "text-indigo-600",
@@ -73,6 +94,13 @@ const statConfig = [
 const Dashboard = () => {
   useDocumentTitle("Dashboard");
   const { data, isLoading } = useDashboardStats();
+  const dashboardData = data || {
+	totalAuctions: 0,
+	activeAuctions: 0,
+	userCredit: 0,
+	userAuctionCount: 0,
+	latestAuctions: [],
+  latestUserAuctions: [] };
 
   if (isLoading) return <LoadingScreen />;
 
@@ -88,7 +116,7 @@ const Dashboard = () => {
             </p>
           </div>
           <Link
-            to="/create"
+            to="/auctions/create"
             className="hidden sm:inline-flex items-center gap-2 bg-indigo-600 text-white text-sm font-semibold px-5 py-2.5 rounded-xl hover:bg-indigo-700 active:scale-[0.97] transition-all shadow-sm shadow-indigo-200"
           >
             <svg
@@ -108,7 +136,8 @@ const Dashboard = () => {
           </Link>
         </div>
 
-        {/* Stats */}
+              {/* Stats */}
+              
         <div className="grid grid-cols-1 sm:grid-cols-3 gap-4 mb-10">
           {statConfig.map((stat) => (
             <div
@@ -123,7 +152,7 @@ const Dashboard = () => {
                 <p
                   className={`text-2xl font-bold ${stat.color} tabular-nums mt-0.5`}
                 >
-                  {data[stat.key]}
+                  {dashboardData[stat.key]}
                 </p>
               </div>
             </div>
@@ -131,37 +160,10 @@ const Dashboard = () => {
         </div>
 
         {/* All Auctions */}
-        <section className="mb-12">
+              <section className="mb-12">
           <div className="flex items-center justify-between mb-5">
             <h2 className="text-lg font-semibold text-gray-900">
-              Latest Auctions
-            </h2>
-            <Link
-              to="/auction"
-              className="text-sm font-medium text-indigo-500 hover:text-indigo-600 transition"
-            >
-              View all &rarr;
-            </Link>
-          </div>
-
-          {data.latestAuctions.length === 0 ? (
-            <div className="text-center py-16 bg-white rounded-2xl border border-gray-200/80 shadow-sm">
-              <p className="text-gray-400">No auctions available yet.</p>
-            </div>
-          ) : (
-            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4">
-              {data.latestAuctions.map((auction) => (
-                <AuctionCard key={auction._id} auction={auction} />
-              ))}
-            </div>
-          )}
-        </section>
-
-        {/* Your Auctions */}
-        <section>
-          <div className="flex items-center justify-between mb-5">
-            <h2 className="text-lg font-semibold text-gray-900">
-              Your Auctions
+              Recent Auctions
             </h2>
             <Link
               to="/myauction"
@@ -171,30 +173,80 @@ const Dashboard = () => {
             </Link>
           </div>
 
-          {data.latestUserAuctions.length === 0 ? (
+          {dashboardData.latestAuctions.length === 0 ? (
             <div className="text-center py-16 bg-white rounded-2xl border border-gray-200/80 shadow-sm">
-              <p className="text-gray-400 mb-4">
-                You haven&apos;t listed anything yet.
-              </p>
-              <Link
-                to="/create"
-                className="inline-flex items-center gap-2 bg-indigo-600 text-white text-sm font-semibold px-5 py-2.5 rounded-xl hover:bg-indigo-700 transition-all shadow-sm shadow-indigo-200"
-              >
-                Create your first auction
-              </Link>
+              <p className="text-gray-400">No auctions available yet.</p>
             </div>
           ) : (
-            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4">
-              {data.latestUserAuctions.map((auction) => (
-                <AuctionCard key={auction._id} auction={auction} />
-              ))}
-            </div>
+            
+			
+			
+			
+			<div className="bg-white rounded-2xl border overflow-hidden">
+			  <table className="w-full">
+				<thead>
+				  <tr className="bg-gray-50">
+					<th className="p-3 text-left">Auction</th>
+					<th className="p-3 text-left">Start</th>
+					<th className="p-3 text-left">End</th>
+					<th className="p-3 text-center">Items</th>
+					<th className="p-3 text-center">Status</th>
+					<th className="p-3 text-center">Action</th>
+				  </tr>
+				</thead>
+
+				<tbody>
+				  {dashboardData.latestUserAuctions.map((auction) => (
+					<tr
+					  key={auction._id}
+					  className="border-t"
+					>
+					  <td className="p-3">
+						{auction.name}
+					  </td>
+
+					  <td className="p-3">
+						{new Date(
+						  auction.startDate
+						).toLocaleString()}
+					  </td>
+
+					  <td className="p-3">
+						{new Date(
+						  auction.endDate
+						).toLocaleString()}
+					  </td>
+
+					  <td className="p-3 text-center">
+						{auction.itemCount ?? 0}
+					  </td>
+
+					  <td className="p-3 text-center">
+						{auction.active
+						  ? "🟢 Active"
+						  : "⚪ Ended"}
+					  </td>
+
+					  <td className="p-3 text-center">
+						<Link
+						  to={`/auctions/${auction._id}/manage`}
+						  className="text-indigo-600 hover:text-indigo-700 font-semibold"
+						>
+						  Open
+						</Link>
+					  </td>
+					</tr>
+				  ))}
+				</tbody>
+			  </table>
+			</div>
           )}
-        </section>
+              </section>
+
 
         {/* Mobile FAB */}
         <Link
-          to="/create"
+          to="/auctions/create"
           className="sm:hidden fixed bottom-6 right-6 bg-indigo-600 text-white p-4 rounded-2xl shadow-lg shadow-indigo-200 hover:bg-indigo-700 active:scale-95 transition-all z-50"
         >
           <svg

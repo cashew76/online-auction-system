@@ -34,14 +34,16 @@ export const login = createAsyncThunk(
 export const signup = createAsyncThunk(
   "auth/signup",
   async ({ name, email, password }, { rejectWithValue }) => {
-    try {
+    console.log("Signup client authSlice start", password);
+	try {
       await api.post(`/auth/signup`, { name, email, password });
+	  console.log("Signup client authSlice auth/signup waited");
 
       const response = await api.get(`/user`);
 
       return response.data;
     } catch (error) {
-      return rejectWithValue(error.response?.data?.error || "Signup failed");
+      return rejectWithValue(error.response?.data?.error || "Signup authSlice failed");
     }
   },
 );

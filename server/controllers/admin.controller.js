@@ -1,52 +1,143 @@
+import Auction from "../models/auction.model.js";
+import AuctionInvite from "../models/auctionInvite.model.js";
 import Product from "../models/product.model.js";
 import User from "../models/user.model.js";
 
 export const getAdminDashboard = async (req, res) => {
   try {
-    // Get statistics
-    const totalAuctions = await Product.countDocuments();
-    const activeAuctions = await Product.countDocuments({
-      itemEndDate: { $gt: new Date() },
-    });
-    const totalUsers = await User.countDocuments();
-    const recentUsers = await User.countDocuments({
-      createdAt: { $gte: new Date(Date.now() - 7 * 24 * 60 * 60 * 1000) },
-    });
+    const now = new Date();
+    const sevenDaysAgo = new Date(
+      Date.now() - 7 * 24 * 60 * 60 * 1000
+    );
 
-    // Get recent active auctions for display
-    const recentActiveAuctions = await Product.find({
-      itemEndDate: { $gt: new Date() },
+    const [
+      totalAuctions,
+      activeAuctions,
+      totalItems,
+      totalInvites,
+      activeInvites,
+      totalUsers,
+      recentUsers,
+    ] = await Promise.all([
+      Auction.countDocuments(),
+
+      Auction.countDocuments({
+        startDate: { $lte: now },
+        endDate: { $gt: now },
+        isArchived: false,
+      }),
+
+      Product.countDocuments(),
+
+      AuctionInvite.countDocuments(),
+
+      AuctionInvite.countDocuments({
+        active: true,
+      }),
+
+      User.countDocuments(),
+
+      User.countDocuments({
+        createdAt: { $gte: sevenDaysAgo },
+      }),
+    ]);
+
+    const recentActiveAuctions = await Auction.find({
+      startDate: { $lte: now },
+      endDate: { $gt: now },
+      isArchived: false,
     })
-      .populate("seller", "name email")
+      .populate("owner", "name email")
       .sort({ createdAt: -1 })
       .limit(10)
       .lean();
 
-    const formattedRecentActiveAuctions = recentActiveAuctions.map(
-      (auction) => ({
-        ...auction,
-        itemPhoto: auction.itemImage?.url || "",
-      }),
+    const auctionIds = recentActiveAuctions.map(
+      (auction) => auction._id
     );
 
-    // Get recent users for display
-    const recentUsersList = await User.find({})
-      .select("name email role createdAt lastLogin location avatar")
-      .sort({ createdAt: -1 })
-      .limit(10);
+    const itemCounts = await Product.aggregate([
+      {
+        $match: {
+          auction: { $in: auctionIds },
+        },
+      },
+      {
+        $group: {
+          _id: "$auction",
+          count: { $sum: 1 },
+        },
+      },
+    ]);
 
-    res.status(200).json({
+    const inviteCounts = await AuctionInvite.aggregate([
+      {
+        $match: {
+          auction: { $in: auctionIds },
+        },
+      },
+      {
+        $group: {
+          _id: "$auction",
+          count: { $sum: 1 },
+        },
+      },
+    ]);
+
+    const itemCountMap = new Map(
+      itemCounts.map((x) => [x._id.toString(), x.count])
+    );
+
+    const inviteCountMap = new Map(
+      inviteCounts.map((x) => [x._id.toString(), x.count])
+    );
+
+    const formattedRecentActiveAuctions =
+      recentActiveAuctions.map((auction) => ({
+        ...auction,
+
+        // Compatibility fields for the existing AdminDashboard.jsx
+        itemName: auction.name,
+        itemDescription: auction.description,
+        itemStartDate: auction.startDate,
+        itemEndDate: auction.endDate,
+
+        seller: auction.owner,
+
+        itemCount:
+          itemCountMap.get(auction._id.toString()) || 0,
+
+        inviteCount:
+          inviteCountMap.get(auction._id.toString()) || 0,
+      }));
+
+    const recentUsersList = await User.find({})
+      .select(
+        "name email role createdAt lastLogin location avatar"
+      )
+      .sort({ createdAt: -1 })
+      .limit(10)
+      .lean();
+
+    return res.status(200).json({
       stats: {
         activeAuctions,
         totalAuctions,
+        totalItems,
+        totalInvites,
+        activeInvites,
         totalUsers,
         recentUsers,
       },
+
       recentAuctions: formattedRecentActiveAuctions,
-      recentUsersList: recentUsersList,
+
+      recentUsersList,
     });
   } catch (error) {
-    res.status(500).json({
+    console.error("Admin dashboard error:", error);
+
+    return res.status(500).json({
       message: "Error fetching admin dashboard data",
       error: error.message,
     });
@@ -89,7 +180,7 @@ export const getAllUsers = async (req, res) => {
       : {};
 
     // Apply role filter if provided
-    const roleFilter = role && ["user", "admin"].includes(role) ? { role } : {};
+    const roleFilter = role && ["user", "admin", "superadmin"].includes(role) ? { role } : {};
 
     const query = { ...searchQuery, ...roleFilter };
 
@@ -128,6 +219,75 @@ export const getAllUsers = async (req, res) => {
     res.status(500).json({
       success: false,
       message: "Error fetching users",
+      error: error.message,
+    });
+  }
+};
+
+export const getAllAuctions = async (req, res) => {
+  try {
+    const auctions = await Auction.find({})
+      .populate("owner", "name email")
+      .sort({ createdAt: -1 })
+      .lean();
+
+    res.status(200).json({
+      success: true,
+      auctions
+    });
+  } catch (error) {
+    res.status(500).json({
+      success: false,
+      message: "Error fetching auctions",
+      error: error.message
+    });
+  }
+};
+
+export const getAllAuctionManagement = async (req, res) => {
+  try {
+    const auctions = await Auction.find({})
+      .populate("owner", "name email")
+      .sort({ createdAt: -1 })
+      .lean();
+
+    const auctionIds = auctions.map((a) => a._id);
+
+    const itemCounts = await Product.aggregate([
+      {
+        $match: {
+          auction: { $in: auctionIds },
+        },
+      },
+      {
+        $group: {
+          _id: "$auction",
+          count: { $sum: 1 },
+        },
+      },
+    ]);
+
+    const itemMap = new Map(
+      itemCounts.map((x) => [x._id.toString(), x.count])
+    );
+
+    const data = auctions.map((auction) => ({
+      _id: auction._id,
+      name: auction.name,
+      description: auction.description,
+      startDate: auction.startDate,
+      endDate: auction.endDate,
+      owner: auction.owner,
+      itemCount: itemMap.get(auction._id.toString()) || 0,
+      active:
+        new Date(auction.startDate) <= new Date() &&
+        new Date(auction.endDate) > new Date(),
+    }));
+
+    res.status(200).json(data);
+  } catch (error) {
+    res.status(500).json({
+      message: "Error loading auctions",
       error: error.message,
     });
   }

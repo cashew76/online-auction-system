@@ -2,62 +2,66 @@ import express from "express";
 import compression from "compression";
 import cors from "cors";
 import cookieParser from "cookie-parser";
+import morgan from "morgan";
+
 import { env } from "./config/env.config.js";
-import {
-  authRoutes,
-  userRoutes,
-  auctionRoutes,
-  contactRoutes,
-  adminRoutes,
-  cloudinaryRoutes,
-} from "./routes/index.js";
+
+import { authRoutes,userRoutes,auctionRoutes,inviteRoutes,contactRoutes,adminRoutes,cloudinaryRoutes } from "./routes/index.js";
+
 import { connectDB } from "./config/db.config.js";
-import cron from "node-cron";
-import { cleanupUnusedUploads } from "./jobs/cleanupUploads.js";
+import fs from "fs";
+import path from "path";
 
-export const app = express();
-
-app.use(
-  cors({
-    origin: env.origin,
-    methods: ["GET", "POST", "PUT", "DELETE", "PATCH"],
-    credentials: true,
-  }),
+ 
+const accessLogStream = fs.createWriteStream(
+path.join(process.cwd(), "access.log"),
+{ flags: "a" }
 );
-app.use(cookieParser());
-app.use(compression());
-app.use(express.json());
+ 
+export const app=express();
 
-// DB connection for Vercel serveless deployment
-if (process.env.VERCEL) {
-  app.use(async (req, res, next) => {
-    await connectDB();
-    next();
-  });
-}
+app.set("trust proxy", true);
 
-let isRunning = false;
-
-// Daily cleanup cron job
-cron.schedule("0 0 * * *", async () => { // Runs at midnight every day
-  if (isRunning) return;
-
-  isRunning = true;
-
-  try {
-    await cleanupUnusedUploads();
-  } catch (err) {
-    console.error(err);
-  } finally {
-    isRunning = false;
-  }
+morgan.token("ip", (req) => {
+  return (
+    req.headers["x-forwarded-for"]?.split(",")[0].trim() ||
+    req.socket.remoteAddress ||
+    req.ip
+  );
 });
 
-app.use("/api/auth", authRoutes);
-app.use("/api/user", userRoutes);
-app.use("/api/auction", auctionRoutes);
-app.use("/api/contact", contactRoutes);
-app.use("/api/admin", adminRoutes);
-app.use("/api/upload", cloudinaryRoutes);
+morgan.token("browser", (req) => {
+	return req.headers["user-agent"] || "Unknown";
+});
+ 
+app.use(
+	morgan(
+	':ip :method :url :status :response-time ms ":browser"'
+		)
+	);
+ 
+app.use(
+	morgan(
+		':ip [:date[iso]] :method :url :status :response-time ms ":browser"',
+		{
+			stream: accessLogStream,
+		}
+	)
+);
 
-export default app; // Exporting default app for serverless deployment
+
+
+app.use(cors({origin:env.origin,methods:["GET","POST","PUT","DELETE","PATCH"],credentials:true}));
+
+app.use(cookieParser()); app.use(compression()); app.use(express.json());
+
+if(process.env.VERCEL)app.use(async(req,res,next)=>{await connectDB();next();});
+
+app.use((err, req, res, next) => {
+console.error(err);
+res.status(500).json({ message: "Server Error" });
+});
+
+app.use("/api/auth",authRoutes); app.use("/api/user",userRoutes); app.use("/api/auction",auctionRoutes); app.use("/api/invite",inviteRoutes);
+app.use("/api/contact",contactRoutes); app.use("/api/admin",adminRoutes); app.use("/api/upload",cloudinaryRoutes);
+export default app;

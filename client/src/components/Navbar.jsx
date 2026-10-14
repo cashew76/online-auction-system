@@ -6,26 +6,33 @@ import { usePrefetchHandlers } from "../hooks/useAuction.js";
 import {
   MdOutlineCreate,
   MdOutlineDashboard,
-  MdMailOutline,
-  MdAttachMoney,
   MdOutlineAccountCircle,
-  MdOutlineHome,
-  MdOutlinePrivacyTip,
   MdAdminPanelSettings,
 } from "react-icons/md";
 import {
   IoCloseSharp,
-  IoDocumentTextOutline,
   IoLogOutOutline,
 } from "react-icons/io5";
 import { RiAuctionLine } from "react-icons/ri";
 import { HiOutlineMenuAlt3 } from "react-icons/hi";
-import { FiTarget } from "react-icons/fi";
+
+const getInviteBidder = () => {
+  if (typeof window === "undefined") return null;
+  const match = window.location.pathname.match(/^\/invite\/([^/]+)/);
+  if (!match) return null;
+  try {
+    const value = sessionStorage.getItem(`invite-bidder:${match[1]}`);
+    return value ? JSON.parse(value) : null;
+  } catch {
+    return null;
+  }
+};
 
 export const Navbar = () => {
   const dispatch = useDispatch();
   const navigate = useNavigate();
   const [isMenuOpen, setIsMenuOpen] = useState(false);
+  const [inviteBidder, setInviteBidder] = useState(() => getInviteBidder());
   const { user } = useSelector((state) => state.auth);
   const {
     prefetchAuctions,
@@ -38,9 +45,7 @@ export const Navbar = () => {
     (link) => {
       const prefetchMap = {
         "/": prefetchDashboard,
-        "/auction": prefetchAuctions,
         "/myauction": prefetchMyAuctions,
-        "/mybids": prefetchMyBids,
       };
       prefetchMap[link]?.();
     },
@@ -57,6 +62,13 @@ export const Navbar = () => {
   };
 
   useEffect(() => {
+    const syncInviteBidder = () => setInviteBidder(getInviteBidder());
+    syncInviteBidder();
+    window.addEventListener("invite-bidder-updated", syncInviteBidder);
+    return () => window.removeEventListener("invite-bidder-updated", syncInviteBidder);
+  }, []);
+
+  useEffect(() => {
     if (isMenuOpen) {
       document.body.style.overflow = "hidden";
     } else {
@@ -67,8 +79,13 @@ export const Navbar = () => {
     };
   }, [isMenuOpen]);
 
-  const navItems = user ? getNavLinks(user.user.role) : navMenu;
-  const drawerItems = user ? getAllLinks(user.user.role) : navMenu;
+  // Auth state can briefly be a partial object while checkAuth is running.
+  // Support both { role } and legacy { user: { role } } shapes without crashing public/invite routes.
+  const authUser = user?.user ?? user ?? null;
+  const userRole = authUser?.role;
+  const isAuthenticated = Boolean(userRole);
+  const navItems = isAuthenticated ? getNavLinks(userRole) : navMenu;
+  const drawerItems = isAuthenticated ? getAllLinks(userRole) : navMenu;
 
   return (
     <>
@@ -82,7 +99,7 @@ export const Navbar = () => {
                   <RiAuctionLine className="h-5 w-5" />
                 </div>
                 <span className="text-lg font-bold text-gray-900 tracking-tight">
-                  Online Auction
+                  Weighted Auction
                 </span>
               </Link>
 
@@ -107,6 +124,12 @@ export const Navbar = () => {
                 ))}
               </nav>
 
+              {inviteBidder?.label && (
+                <div className="hidden md:flex items-center gap-2 px-3 py-1.5 rounded-lg bg-indigo-50 text-sm">
+                  <span className="text-gray-500">Bidding person:</span>
+                  <span className="font-semibold text-indigo-700">{inviteBidder.label}</span>
+                </div>
+              )}
               {/* Right Section */}
               <div className="flex items-center gap-2">
                 {/* Desktop auth buttons */}
@@ -128,9 +151,9 @@ export const Navbar = () => {
                       }
                     >
                       <div className="w-7 h-7 rounded-full bg-indigo-100 flex items-center justify-center text-xs font-bold text-indigo-600">
-                        {user.user.name?.charAt(0)?.toUpperCase()}
+                        {authUser?.name?.charAt(0)?.toUpperCase()}
                       </div>
-                      {user.user.name?.split(" ")[0]}
+                      {authUser?.name?.split(" ")[0]}
                     </NavLink>
                     <button
                       onClick={handleLogout}
@@ -182,7 +205,7 @@ export const Navbar = () => {
               <RiAuctionLine className="h-5 w-5" />
             </div>
             <span className="text-lg font-bold text-gray-900 tracking-tight">
-              Online Auction
+              Weighted Auction
             </span>
           </Link>
           <button
@@ -199,24 +222,24 @@ export const Navbar = () => {
           <div className="px-5 py-4 border-b border-gray-100">
             <div className="flex items-center gap-3">
               <div className="h-10 w-10 rounded-full bg-indigo-100 flex items-center justify-center overflow-hidden">
-                {user.user.avatar ? (
+                {authUser?.avatar ? (
                   <img
-                    src={user.user.avatar}
-                    alt={user.user.name}
+                    src={authUser?.avatar}
+                    alt={authUser?.name}
                     className="h-full w-full object-cover"
                   />
                 ) : (
                   <span className="text-sm font-bold text-indigo-600">
-                    {user.user.name?.charAt(0)?.toUpperCase()}
+                    {authUser?.name?.charAt(0)?.toUpperCase()}
                   </span>
                 )}
               </div>
               <div className="min-w-0">
                 <p className="font-semibold text-gray-900 text-sm truncate">
-                  {user.user.name}
+                  {authUser?.name}
                 </p>
                 <p className="text-xs text-gray-400 truncate">
-                  {user.user.email}
+                  {authUser?.email}
                 </p>
               </div>
             </div>
@@ -310,22 +333,7 @@ const navMenu = [
   {
     name: "Home",
     link: "/",
-    icon: <MdOutlineHome className="h-5 w-5" />,
-  },
-  {
-    name: "About",
-    link: "/about",
-    icon: <MdOutlineAccountCircle className="h-5 w-5" />,
-  },
-  {
-    name: "Contact",
-    link: "/contact",
-    icon: <MdMailOutline className="h-5 w-5" />,
-  },
-  {
-    name: "Legal",
-    link: "/legal",
-    icon: <IoDocumentTextOutline className="h-5 w-5" />,
+    icon: <RiAuctionLine className="h-5 w-5" />,
   },
 ];
 
@@ -336,39 +344,19 @@ const protectedNavLink = [
     icon: <MdOutlineDashboard className="h-5 w-5" />,
   },
   {
-    name: "Create Auction",
-    link: "/create",
-    icon: <MdOutlineCreate className="h-5 w-5" />,
-  },
-  {
-    name: "Auctions",
-    link: "/auction",
+    name: "My Auctions",
+    link: "/myauction",
     icon: <RiAuctionLine className="h-5 w-5" />,
   },
   {
-    name: "My Auctions",
-    link: "/myauction",
-    icon: <MdAttachMoney className="h-5 w-5" />,
-  },
-  {
-    name: "My Bids",
-    link: "/mybids",
-    icon: <FiTarget className="h-5 w-5" />,
-  },
-  {
-    name: "Contact",
-    link: "/contact",
-    icon: <MdMailOutline className="h-5 w-5" />,
+    name: "Create Auction",
+    link: "/auctions/create",
+    icon: <MdOutlineCreate className="h-5 w-5" />,
   },
   {
     name: "Profile",
     link: "/profile",
     icon: <MdOutlineAccountCircle className="h-5 w-5" />,
-  },
-  {
-    name: "Privacy",
-    link: "/privacy",
-    icon: <MdOutlinePrivacyTip className="h-5 w-5" />,
   },
 ];
 
@@ -379,49 +367,31 @@ const adminNavLink = [
     icon: <MdAdminPanelSettings className="h-5 w-5" />,
   },
   {
-    name: "Dashboard",
-    link: "/",
-    icon: <MdOutlineDashboard className="h-5 w-5" />,
-  },
-  {
-    name: "Create Auction",
-    link: "/create",
-    icon: <MdOutlineCreate className="h-5 w-5" />,
-  },
-  {
-    name: "Auctions",
-    link: "/auction",
-    icon: <RiAuctionLine className="h-5 w-5" />,
-  },
-  {
-    name: "My Auctions",
-    link: "/myauction",
-    icon: <MdAttachMoney className="h-5 w-5" />,
-  },
-  {
-    name: "My Bids",
-    link: "/mybids",
-    icon: <FiTarget className="h-5 w-5" />,
-  },
+	name: "Auction Management",
+	link: "/superadmin",
+	icon: <RiAuctionLine className="h-5 w-5" />,
+	},
+  ...protectedNavLink,
 ];
 
-// Top nav bar links (limited set for desktop)
+const superAdminNavLink = [
+  {
+    name: "Admin Panel",
+    link: "/admin",
+    icon: <MdAdminPanelSettings className="h-5 w-5" />,
+  },
+  {
+    name: "Super Admin",
+    link: "/admin/superadmin",
+    icon: <RiAuctionLine className="h-5 w-5" />,
+  },
+  ...protectedNavLink,
+];
+
 const getNavLinks = (userRole) => {
-  if (userRole === "admin") {
-    return adminNavLink;
-  }
-  return protectedNavLink.slice(0, 5);
+  if (userRole === "superadmin") return superAdminNavLink;
+  if (userRole === "admin") return adminNavLink;
+  return protectedNavLink;
 };
 
-// Links for the hamburger drawer
-const getAllLinks = (userRole) => {
-  if (userRole === "admin") {
-    return [
-      ...adminNavLink,
-      protectedNavLink[5], // Contact
-      protectedNavLink[6], // Profile
-      protectedNavLink[7], // Privacy
-    ];
-  }
-  return protectedNavLink; // All 8 links
-};
+const getAllLinks = getNavLinks;

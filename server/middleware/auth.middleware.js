@@ -23,3 +23,13 @@ export const checkAdmin = (req, res, next) => {
   }
   next();
 };
+
+export const checkSuperAdmin = (req, res, next) => {
+if (req.user.role !== "superadmin") {
+return res.status(403).json({
+message: "SuperAdmin access required"
+});
+}
+ 
+next();
+};

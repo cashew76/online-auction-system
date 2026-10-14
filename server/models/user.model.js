@@ -22,6 +22,13 @@ const userSchema = new mongoose.Schema(
     avatar: {
       type: String,
     },
+	auction: {
+      type: String,
+    },
+	credit: {
+      type: Number,
+	  default: 1000,
+    },
     role: {
       type: String,
       enum: ["user", "admin"],

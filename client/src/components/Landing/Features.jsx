@@ -12,7 +12,7 @@ const features = [
     icon: <FaShieldAlt className="text-xl text-emerald-600" />,
     bg: "bg-emerald-50",
     title: "Secure & Trusted",
-    desc: "Your transactions are protected with industry-standard security. Buy and sell with peace of mind.",
+    desc: "Your transactions are protected with industry-standard security. Bid with peace of mind.",
   },
   {
     icon: <FaClock className="text-xl text-amber-600" />,
@@ -24,18 +24,17 @@ const features = [
 
 export const Features = () => {
   return (
-    <section className="py-20 sm:py-24">
+    <section className="py-1 sm:py-1">
       <div className="max-w-6xl mx-auto px-4">
         <div className="text-center mb-14">
           <p className="text-indigo-600 font-semibold text-sm uppercase tracking-wider mb-2">
-            Why us
+            
           </p>
           <h2 className="text-3xl sm:text-4xl font-bold text-gray-900 mb-4">
-            Built for Buyers & Sellers
+            Built to Distribute valued Heirlooms
           </h2>
           <p className="text-gray-500 max-w-lg mx-auto">
-            Everything you need for a seamless auction experience, all in one
-            place.
+            Reduce stress of sharing items among family
           </p>
         </div>
 

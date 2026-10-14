@@ -1,126 +1,27 @@
-import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
-import {
-  getAuctions,
-  getMyAuctions,
-  getMyBids,
-  viewAuction,
-  placeBid,
-  createAuction,
-  dashboardStats,
-} from "../services/auction.service.js";
-
-export const useGetAuctions = (page = 1) => {
-  return useQuery({
-    queryKey: ["auctions", page],
-    queryFn: () => getAuctions({ page }),
-    keepPreviousData: true,
-  });
-};
-
-export const useGetMyAuctions = (page = 1) => {
-  return useQuery({
-    queryKey: ["myAuctions", page],
-    queryFn: () => getMyAuctions({ page }),
-    keepPreviousData: true,
-  });
-};
-
-export const useGetMyBids = (page = 1) => {
-  return useQuery({
-    queryKey: ["myBids", page],
-    queryFn: () => getMyBids({ page }),
-    keepPreviousData: true,
-  });
-};
-
-export const useViewAuction = (id) => {
-  return useQuery({
-    queryKey: ["auction", id],
-    queryFn: () => viewAuction(id),
-    enabled: !!id,
-  });
-};
-
-export const usePlaceBid = () => {
-  const queryClient = useQueryClient();
-
-  return useMutation({
-    mutationFn: ({ bidAmount, id }) => placeBid({ bidAmount, id }),
-    onSuccess: (data, variables) => {
-      queryClient.invalidateQueries(["auction", variables.id]);
-      queryClient.invalidateQueries(["auctions"]);
-      queryClient.invalidateQueries(["myAuctions"]);
-      queryClient.invalidateQueries(["myBids"]);
-      queryClient.invalidateQueries(["dashboardStats"]);
-    },
-  });
-};
-
-export const useCreateAuction = (options = {}) => {
-  const queryClient = useQueryClient();
-
-  return useMutation({
-    mutationFn: (data) => createAuction(data),
-    onSuccess: (...args) => {
-      queryClient.invalidateQueries(["auctions"]);
-      queryClient.invalidateQueries(["myAuctions"]);
-      queryClient.invalidateQueries(["dashboardStats"]);
-      options.onSuccess?.(...args);
-    },
-    onError: options.onError,
-  });
-};
-
-export const useDashboardStats = () => {
-  return useQuery({
-    queryKey: ["dashboardStats"],
-    queryFn: dashboardStats,
-  });
-};
-
-// Prefetch helpers
+import { useMutation,useQuery,useQueryClient } from "@tanstack/react-query";
+import * as svc from "../services/auction.service.js";
+export const useGetMyAuctions=()=>useQuery({queryKey:["ownerAuctions"],queryFn:svc.getMyAuctions});
+export const useOwnerAuction=id=>useQuery({queryKey:["ownerAuction",id],queryFn:()=>svc.getOwnerAuction(id),enabled:!!id});
+export const useCreateAuction=(options={})=>{const q=useQueryClient();return useMutation({mutationFn:svc.createAuction,onSuccess:(...a)=>{q.invalidateQueries({queryKey:["ownerAuctions"]});options.onSuccess?.(...a);},onError:options.onError});};
+export const useInviteAuction=guid=>useQuery({queryKey:["inviteAuction",guid],queryFn:()=>svc.getInviteAuction(guid),enabled:!!guid,refetchInterval:15000});
+export const useInviteBid=guid=>{const q=useQueryClient();return useMutation({mutationFn:({itemId,bidAmount})=>svc.placeInviteBid({guid,itemId,bidAmount}),onSuccess:()=>q.invalidateQueries({queryKey:["inviteAuction",guid]})});};
 export const usePrefetchHandlers = () => {
   const queryClient = useQueryClient();
 
-  const prefetchAuction = (id) => {
+  const prefetchAuction = () => {};
+  const prefetchAuctions = () => {};
+
+  const prefetchMyAuctions = () => {
     queryClient.prefetchQuery({
-      queryKey: ["auction", id],
-      queryFn: () => viewAuction(id),
+      queryKey: ["ownerAuctions"],
+      queryFn: svc.getMyAuctions,
       staleTime: 30_000,
     });
   };
 
-  const prefetchAuctions = (page = 1) => {
-    queryClient.prefetchQuery({
-      queryKey: ["auctions", page],
-      queryFn: () => getAuctions({ page }),
-      staleTime: 30_000,
-    });
-  };
+  const prefetchMyBids = () => {};
 
-  const prefetchMyAuctions = (page = 1) => {
-    queryClient.prefetchQuery({
-      queryKey: ["myAuctions", page],
-      queryFn: () => getMyAuctions({ page }),
-      staleTime: 30_000,
-    });
-  };
-
-  const prefetchMyBids = (page = 1) => {
-    queryClient.prefetchQuery({
-      queryKey: ["myBids", page],
-      queryFn: () => getMyBids({ page }),
-      staleTime: 30_000,
-    });
-  };
-
-  const prefetchDashboard = () => {
-    queryClient.prefetchQuery({
-      queryKey: ["dashboardStats"],
-      queryFn: dashboardStats,
-      staleTime: 30_000,
-    });
-  };
+  const prefetchDashboard = () => {};
 
   return {
     prefetchAuction,
@@ -129,4 +30,28 @@ export const usePrefetchHandlers = () => {
     prefetchMyBids,
     prefetchDashboard,
   };
+};
+export const useDashboardStats = () => {
+  return useQuery({
+    queryKey: ["dashboardStats"],
+    queryFn: async () => {
+      const data = await svc.getMyAuctions();
+      const auctions = data?.auctions || [];
+
+      const now = new Date();
+
+		return {
+		  totalAuctions: auctions.length,
+		  userAuctionCount: auctions.length,
+		  activeAuctions: auctions.filter(
+			(auction) =>
+			  new Date(auction.startDate) <= now &&
+			  new Date(auction.endDate) > now
+		  ).length,
+		  userCredit: 0,
+		  latestAuctions: auctions.slice(0, 4),
+		  latestUserAuctions: auctions.slice(0, 4),
+		};
+    },
+  });
 };
