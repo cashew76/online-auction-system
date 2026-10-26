@@ -7,6 +7,7 @@ import InviteAuction from "../pages/InviteAuction";
 import { Contact } from "../pages/Contact";
 import { About } from "../pages/About";
 import Legal from "../pages/Legal/Legal";
+import DMCAPolicy from "../pages/legal/DMCAPolicy";
 export const openRoutes=[
 {
 	path:"/",element:<OpenLayout/>,errorElement:<Error/>,
@@ -17,5 +18,6 @@ export const openRoutes=[
 	{path:"invite/:guid",element:<InviteAuction/>},
 	{path: "about", element: <About /> },
 	{path: "legal", element: <Legal /> },
+	{ path: "legal/dmca", element: <DMCAPolicy /> },
 	{path: "contact", element: <Contact /> },
 	],},];

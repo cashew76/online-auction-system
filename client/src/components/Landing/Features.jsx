@@ -6,19 +6,19 @@ const features = [
     icon: <FaGavel className="text-xl text-indigo-600" />,
     bg: "bg-indigo-50",
     title: "Easy Bidding",
-    desc: "Place bids with confidence using our intuitive interface. Track your bids and get real-time updates.",
+    desc: "Place bids using assigned Credits. Track your bids and get real-time updates.",
   },
   {
     icon: <FaShieldAlt className="text-xl text-emerald-600" />,
     bg: "bg-emerald-50",
-    title: "Secure & Trusted",
-    desc: "Your transactions are protected with industry-standard security. Bid with peace of mind.",
+    title: "Free Credit Based",
+    desc: "Credits based to fairly distribute items.",
   },
   {
     icon: <FaClock className="text-xl text-amber-600" />,
     bg: "bg-amber-50",
     title: "24/7 Auctions",
-    desc: "Never miss an opportunity. Our platform runs around the clock so you can bid whenever you want.",
+    desc: "Platform runs around the clock so you can bid whenever you want.",
   },
 ];
 

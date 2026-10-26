@@ -15,7 +15,7 @@ changeOrigin: true,
 },
 },
 allowedHosts: [
-"remote.louisind.com",
+"auction.cashew76.com",
 ],
 },
 })

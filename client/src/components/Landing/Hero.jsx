@@ -34,7 +34,7 @@ Simple and easy as 1, 2, 3!
 			<ol className="max-w-xl mx-auto text-left text-gray-600 list-decimal list-inside space-y-2 mb-10 pl-40">
 			<li>Create an <em>Admin</em> Account</li>
 			<li>Add Auction Items</li>
-			<li>Share User Invites with 1,000 Credits</li>
+			<li>Share 1,000 Credit User Invites</li>
 			</ol>
           <div className="flex flex-col sm:flex-row gap-3 justify-center">
             <Link

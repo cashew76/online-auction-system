@@ -1,0 +1,12 @@
+{
+    http_port 8080
+}
+
+auction.cashew76.com:443, auction.cashew76.com:1445 {
+
+    reverse_proxy localhost:5173
+
+    header {
+        Strict-Transport-Security "max-age=31536000"
+    }
+}
